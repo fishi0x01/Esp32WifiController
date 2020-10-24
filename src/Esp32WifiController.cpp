@@ -44,15 +44,17 @@ void connectWifi()
     if (wifiPassword.length() == 0 || wifiSsid.length() == 0) {
         return;
     }
+    Serial.println("Try connecting to Wifi");
     char ssidBuf[wifiSsid.length() + 1];
     char passBuf[wifiPassword.length() + 1];
     wifiSsid.toCharArray(ssidBuf, wifiSsid.length());
     wifiPassword.toCharArray(passBuf, wifiPassword.length());
     int status = WiFi.begin(ssidBuf, passBuf);
+    int waitCountdown = 10;
     while (status != WL_CONNECTED && status != WL_CONNECT_FAILED &&
-           status != WL_NO_SSID_AVAIL) {
-        // TODO: break after max tries
+           status != WL_NO_SSID_AVAIL && waitCountdown > 0) {
         vTaskDelay(1000);
+        waitCountdown--;
     }
 }
 
@@ -72,8 +74,9 @@ void bluetoothProcessMessage()
     bluetoothMessage = String();
 }
 
-void bluetoothReceive()
+void bluetoothCallback(esp_spp_cb_event_t event, esp_spp_cb_param_t* param)
 {
+    if (event != ESP_SPP_DATA_IND_EVT) return;
     int numMessages = SerialBT.available();
     while (numMessages > 0) {
         char inputChar = SerialBT.read();
@@ -93,8 +96,6 @@ void loop(void* params)
     int btActivityCountdown = 0;
     while (1) {
         if (btActivityCountdown > 0) btActivityCountdown--;
-
-        if (SerialBT.hasClient()) bluetoothReceive();
 
         if (btActivityCountdown == 0 && !SerialBT.hasClient() &&
             SerialBT.isReady()) {
@@ -119,6 +120,7 @@ void Esp32WifiController::begin(char* btName, int pbPin)
     pushbuttonPin = pbPin;
     readWifiCredentials();
     connectWifi();
+    SerialBT.register_callback(bluetoothCallback);
     xTaskCreate(loop, "WifiController", 10000, NULL, 1, &loopTask);
     configASSERT(loopTask);
     Serial.println("Started Wifi Controller Task");
