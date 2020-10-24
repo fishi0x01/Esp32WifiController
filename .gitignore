@@ -1,0 +1,5 @@
+*.swp
+.venv/
+bin/
+build/
+upload.sh
