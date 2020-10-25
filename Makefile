@@ -18,4 +18,7 @@ cli:
 	@rm bin/LICENSE.txt
 
 compile:
-	@. .venv/bin/activate && $(CLI) compile --fqbn esp32:esp32:esp32 --libraries $(shell pwd) $(shell pwd)/examples/Test --build-properties build.partitions=huge_app,upload.maximum_size=3145728
+	@. .venv/bin/activate && $(CLI) compile --fqbn esp32:esp32:esp32 --libraries $(shell pwd) $(shell pwd)/examples/Test --build-properties build.extra_flags=-DCORE_DEBUG_LEVEL=5 --build-properties build.partitions=huge_app,upload.maximum_size=3145728 
+
+compile-release:
+	@. .venv/bin/activate && $(CLI) compile --fqbn esp32:esp32:esp32 --libraries $(shell pwd) $(shell pwd)/examples/Test --build-properties build.extra_flags=-DCORE_DEBUG_LEVEL=0 --build-properties build.partitions=huge_app,upload.maximum_size=3145728
